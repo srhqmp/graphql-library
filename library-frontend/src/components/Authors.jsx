@@ -36,7 +36,7 @@ const Authors = (props) => {
           ))}
         </tbody>
       </table>
-      <AuthorForm setError={props.setError} />
+      <AuthorForm authors={authors} setError={props.setError} />
     </div>
   );
 };

@@ -3,8 +3,8 @@ import { useMutation } from "@apollo/client";
 
 import { ALL_AUTHORS, UPDATE_AUTHOR } from "../queries";
 
-const AuthorForm = ({ setError }) => {
-  const [name, setName] = useState("");
+const AuthorForm = ({ setError, authors }) => {
+  const [name, setName] = useState(authors[0].name);
   const [born, setBorn] = useState("");
 
   const [updateAuthor, result] = useMutation(UPDATE_AUTHOR, {
@@ -32,8 +32,6 @@ const AuthorForm = ({ setError }) => {
     }
 
     updateAuthor({ variables: { name, setBornTo: Number(born) } });
-
-    setName("");
     setBorn("");
   };
 
@@ -48,11 +46,18 @@ const AuthorForm = ({ setError }) => {
       <h3>Set birthyear</h3>
       <form onSubmit={submit}>
         <div>
-          name{" "}
-          <input
-            value={name}
+          <select
+            name="name"
+            id="name"
             onChange={({ target }) => setName(target.value)}
-          />
+            defaultValue={authors[0].name}
+          >
+            {authors.map((a) => (
+              <option key={a.name} value={a.name}>
+                {a.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           born{" "}
