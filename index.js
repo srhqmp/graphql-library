@@ -18,50 +18,6 @@ mongoose
     console.log("Failed to connect to MongoDB: ", error);
   });
 
-// let authors = [
-//   {
-//     name: "Robert Martin",
-//     id: "afa51ab0-344d-11e9-a414-719c6709cf3e",
-//     born: 1952,
-//   },
-//   {
-//     name: "Martin Fowler",
-//     id: "afa5b6f0-344d-11e9-a414-719c6709cf3e",
-//     born: 1963,
-//   },
-//   {
-//     name: "Fyodor Dostoevsky",
-//     id: "afa5b6f1-344d-11e9-a414-719c6709cf3e",
-//     born: 1821,
-//   },
-//   {
-//     name: "Joshua Kerievsky", // birthyear not known
-//     id: "afa5b6f2-344d-11e9-a414-719c6709cf3e",
-//   },
-//   {
-//     name: "Sandi Metz", // birthyear not known
-//     id: "afa5b6f3-344d-11e9-a414-719c6709cf3e",
-//   },
-// ];
-
-/*
- * Suomi:
- * Saattaisi olla järkevämpää assosioida kirja ja sen tekijä tallettamalla kirjan yhteyteen tekijän nimen sijaan tekijän id
- * Yksinkertaisuuden vuoksi tallennamme kuitenkin kirjan yhteyteen tekijän nimen
- *
- * English:
- * It might make more sense to associate a book with its author by storing the author's id in the context of the book instead of the author's name
- * However, for simplicity, we will store the author's name in connection with the book
- *
- * Spanish:
- * Podría tener más sentido asociar un libro con su autor almacenando la id del autor en el contexto del libro en lugar del nombre del autor
- * Sin embargo, por simplicidad, almacenaremos el nombre del autor en conexión con el libro
- */
-
-/*
-  you can remove the placeholder query once your first one has been implemented 
-*/
-
 const typeDefs = `
   type Author {
     name: String!
@@ -106,8 +62,17 @@ const resolvers = {
     bookCount: async () => Book.collection.countDocuments(),
     authorCount: async () => Author.collection.countDocuments(),
     allBooks: async (root, args) => {
-      const books = await Book.find({});
-      return books;
+      let query = {};
+
+      if (args.author) {
+        const author = await Author.findOne({ name: args.author });
+        query.author = author ? author._id : [];
+      }
+      if (args.genre) {
+        query.genres = { $in: [args.genre] };
+      }
+
+      return Book.find(query).populate("author");
     },
     allAuthors: async () => Author.find({}),
   },
@@ -125,14 +90,14 @@ const resolvers = {
 
       return book.populate("author");
     },
-    editAuthor: (root, args) => {
-      const author = authors.find((a) => a.name === args.name);
+    editAuthor: async (root, args) => {
+      const author = await Author.findOne({ name: args.name });
       if (!author) {
         return null;
       }
-      const updatedAuthor = { ...author, born: args.setBornTo };
-      authors = authors.map((a) => (a.name === args.name ? updatedAuthor : a));
-      return updatedAuthor;
+      author.born = args.setBornTo;
+      await author.save();
+      return author;
     },
   },
   Book: {
@@ -140,9 +105,9 @@ const resolvers = {
   },
   Author: {
     bookCount: async (root) => {
-      const books = await Book.find({}).populate("author");
-      const booksByAuthor = books.filter((b) => b.author.name === root.name);
-      return booksByAuthor.length;
+      const author = await Author.findOne({ name: root.name });
+      const books = await Book.find({ author: author.id });
+      return books.length;
     },
   },
 };
