@@ -1,4 +1,5 @@
 const { ApolloServer } = require("@apollo/server");
+const { GraphQLError } = require("graphql");
 const { startStandaloneServer } = require("@apollo/server/standalone");
 const mongoose = require("mongoose");
 require("dotenv").config();
@@ -82,11 +83,38 @@ const resolvers = {
 
       if (!author) {
         author = new Author({ name: args.author });
-        await author.save();
+
+        try {
+          await author.save();
+        } catch (error) {
+          throw new GraphQLError(
+            "Name must be unique and at least 4 characters long",
+            {
+              extensions: {
+                code: "BAD_USER_INPUT",
+                invalidArgs: args.author,
+                error,
+              },
+            }
+          );
+        }
       }
 
       const book = new Book({ ...args, author: author._id });
-      await book.save();
+      try {
+        await book.save();
+      } catch (error) {
+        throw new GraphQLError(
+          "Book title must be unique and at least 5 characters long",
+          {
+            extensions: {
+              code: "BAD_USER_INPUT",
+              invalidArgs: args.title,
+              error,
+            },
+          }
+        );
+      }
 
       return book.populate("author");
     },
