@@ -28,13 +28,16 @@ const Books = (props) => {
     return <div>loading...</div>;
   }
 
-  const books = genre
-    ? response.data.allBooks.filter((b) => b.genres.includes(genre))
-    : response.data.allBooks;
+  const books =
+    genre || props.favoriteGenre
+      ? response.data.allBooks.filter((b) =>
+          b.genres.includes(genre || props.favoriteGenre)
+        )
+      : response.data.allBooks;
 
   return (
     <div>
-      <h2>books</h2>
+      {!props.hideTitle && <h2>books</h2>}
       {genre && (
         <div>
           in genre <strong>{genre}</strong>{" "}
@@ -58,13 +61,15 @@ const Books = (props) => {
           ))}
         </tbody>
       </table>
-      <div>
-        {genres.map((g) => (
-          <button key={g} onClick={() => setGenre(g)} disabled={genre === g}>
-            {g}
-          </button>
-        ))}
-      </div>
+      {!props.hideFilter && (
+        <div>
+          {genres.map((g) => (
+            <button key={g} onClick={() => setGenre(g)} disabled={genre === g}>
+              {g}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
