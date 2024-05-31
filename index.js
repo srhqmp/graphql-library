@@ -151,7 +151,7 @@ const resolvers = {
           await author.save();
         } catch (error) {
           throw new GraphQLError(
-            "Name must be unique and at least 4 characters long",
+            "Author name must be unique and at least 4 characters long",
             {
               extensions: {
                 code: "BAD_USER_INPUT",

@@ -15,7 +15,6 @@ const Books = (props) => {
     return <div>loading...</div>;
   }
 
-  console.log(response.data);
   const books = response.data.allBooks;
 
   return (

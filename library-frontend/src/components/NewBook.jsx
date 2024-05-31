@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@apollo/client";
 
-import { ALL_BOOKS, CREATE_BOOK } from "../queries";
+import { ALL_AUTHORS, ALL_BOOKS, CREATE_BOOK } from "../queries";
 
 const NewBook = (props) => {
   const [title, setTitle] = useState("");
@@ -15,6 +15,13 @@ const NewBook = (props) => {
       cache.updateQuery({ query: ALL_BOOKS }, ({ allBooks }) => {
         return { allBooks: allBooks.concat(response.data.addBook) };
       });
+      cache.updateQuery({ query: ALL_AUTHORS }, ({ allAuthors }) => {
+        return { allAuthors: allAuthors.concat(response.data.addBook.author) };
+      });
+    },
+    onError: (error) => {
+      console.error(error.graphQLErrors);
+      props.setError(error.graphQLErrors[0].message);
     },
   });
 
@@ -26,13 +33,17 @@ const NewBook = (props) => {
     event.preventDefault();
 
     console.log("add book...");
-    createBook({ variables: { title, author, published, genres } });
+    createBook({
+      variables: { title, author, published: Number(published), genres },
+    });
 
     setTitle("");
     setPublished("");
     setAuthor("");
     setGenres([]);
     setGenre("");
+
+    props.setPage("books");
   };
 
   const addGenre = () => {
