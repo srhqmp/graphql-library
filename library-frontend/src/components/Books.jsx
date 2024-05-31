@@ -1,24 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@apollo/client";
 
-import { ALL_BOOKS } from "../queries";
+import { ALL_BOOKS, ALL_GENRES } from "../queries";
 
 const Books = (props) => {
-  const [genres, setGenres] = useState([]);
   const [genre, setGenre] = useState(null);
   const response = useQuery(ALL_BOOKS, {
     skip: !props.show,
+    variables: { genre: genre || props.favoriteGenre },
   });
-
-  useEffect(() => {
-    if (response.data?.allBooks) {
-      const books = response.data.allBooks;
-      const arr = books.flatMap((b) => {
-        return b.genres.flatMap((g) => g);
-      });
-      setGenres([...new Set(arr)]);
-    }
-  }, [response.data]);
+  const allGenresRespons = useQuery(ALL_GENRES, {
+    skip: !props.show,
+  });
 
   if (!props.show) {
     return null;
@@ -28,12 +21,8 @@ const Books = (props) => {
     return <div>loading...</div>;
   }
 
-  const books =
-    genre || props.favoriteGenre
-      ? response.data.allBooks.filter((b) =>
-          b.genres.includes(genre || props.favoriteGenre)
-        )
-      : response.data.allBooks;
+  const books = response.data.allBooks;
+  const genres = allGenresRespons.data.allGenres;
 
   return (
     <div>
