@@ -13,6 +13,10 @@ const Recommendations = (props) => {
     return null;
   }
 
+  if (response.loading) {
+    return <div>loading...</div>;
+  }
+
   const me = response.data.me;
 
   return (

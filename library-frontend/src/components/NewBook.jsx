@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@apollo/client";
 
-import { ALL_AUTHORS, ALL_BOOKS, CREATE_BOOK } from "../queries";
+import { ALL_AUTHORS, ALL_BOOKS, ALL_GENRES, CREATE_BOOK } from "../queries";
 
 const NewBook = (props) => {
   const [title, setTitle] = useState("");
@@ -10,18 +10,41 @@ const NewBook = (props) => {
   const [genre, setGenre] = useState("");
   const [genres, setGenres] = useState([]);
 
+  const resetFields = () => {
+    setTitle("");
+    setPublished("");
+    setAuthor("");
+    setGenres([]);
+    setGenre("");
+  };
+
   const [createBook, result] = useMutation(CREATE_BOOK, {
     update: (cache, response) => {
+      props.setPage("books");
+      resetFields();
+
+      const newBook = response.data.addBook;
+
+      // TODO: Fix ALL_BOOKS queries with variables
       cache.updateQuery({ query: ALL_BOOKS }, ({ allBooks }) => {
-        return { allBooks: allBooks.concat(response.data.addBook) };
+        return { allBooks: allBooks.concat(newBook) };
       });
       cache.updateQuery({ query: ALL_AUTHORS }, ({ allAuthors }) => {
-        return { allAuthors: allAuthors.concat(response.data.addBook.author) };
+        return { allAuthors: allAuthors.concat(newBook.author) };
+      });
+      cache.updateQuery({ query: ALL_GENRES }, ({ allGenres }) => {
+        return {
+          allGenres: [...new Set(allGenres.concat(...newBook.genres))],
+        };
       });
     },
+    refetchQueries: [{ query: ALL_BOOKS }],
+    awaitRefetchQueries: true,
     onError: (error) => {
-      console.error(error.graphQLErrors);
-      props.setError(error.graphQLErrors[0].message);
+      if (error) {
+        console.error(error.graphQLErrors);
+        props.setError(error.graphQLErrors[0].message);
+      }
     },
   });
 
@@ -36,14 +59,6 @@ const NewBook = (props) => {
     createBook({
       variables: { title, author, published: Number(published), genres },
     });
-
-    setTitle("");
-    setPublished("");
-    setAuthor("");
-    setGenres([]);
-    setGenre("");
-
-    props.setPage("books");
   };
 
   const addGenre = () => {
