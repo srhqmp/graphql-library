@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@apollo/client";
 
 import { ALL_AUTHORS, ALL_BOOKS, ALL_GENRES, CREATE_BOOK } from "../queries";
+import { updateCache } from "../helpers";
 
 const NewBook = (props) => {
   const [title, setTitle] = useState("");
@@ -18,17 +19,15 @@ const NewBook = (props) => {
     setGenre("");
   };
 
-  const [createBook, result] = useMutation(CREATE_BOOK, {
+  const [createBook] = useMutation(CREATE_BOOK, {
     update: (cache, response) => {
       props.setPage("books");
       resetFields();
 
       const newBook = response.data.addBook;
 
-      // TODO: Fix ALL_BOOKS queries with variables
-      cache.updateQuery({ query: ALL_BOOKS }, ({ allBooks }) => {
-        return { allBooks: allBooks.concat(newBook) };
-      });
+      updateCache(cache, { query: ALL_BOOKS }, response.data.addBook);
+
       cache.updateQuery({ query: ALL_AUTHORS }, ({ allAuthors }) => {
         return { allAuthors: allAuthors.concat(newBook.author) };
       });
