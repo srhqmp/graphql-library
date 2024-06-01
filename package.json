@@ -4,6 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build:ui": "rm -rf dist && cd ./library-frontend/ && npm run build && cp -r dist ../",
+    "deploy": "flyctl deploy",
+    "deploy:full": "npm run build:ui && npm run deploy",
+    "logs:prod": "flyctl logs",
     "test": "echo \"Error: no test specified\" && exit 1",
     "client": "npm run dev --prefix library-frontend",
     "dev": "concurrently \"node index.js\" \"npm run client\""
@@ -26,6 +30,7 @@
     "ws": "^8.17.0"
   },
   "devDependencies": {
+    "@flydotio/dockerfile": "^0.5.7",
     "concurrently": "^8.2.2"
   }
 }

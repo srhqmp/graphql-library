@@ -10,6 +10,8 @@ const http = require("http");
 const { WebSocketServer } = require("ws");
 const { useServer } = require("graphql-ws/lib/use/ws");
 
+const path = require("path");
+
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
@@ -37,7 +39,7 @@ const start = async () => {
 
   const wsServer = new WebSocketServer({
     server: httpServer,
-    path: "/",
+    path: "/graphql",
   });
 
   const schema = makeExecutableSchema({ typeDefs, resolvers });
@@ -62,7 +64,7 @@ const start = async () => {
   await server.start();
 
   app.use(
-    "/",
+    "/graphql",
     cors(),
     express.json(),
     expressMiddleware(server, {
@@ -80,7 +82,15 @@ const start = async () => {
     })
   );
 
-  const PORT = 4000;
+  // Serve static files from the dist folder
+  app.use(express.static(path.join(__dirname, "dist")));
+
+  // For any other requests, send back the index.html from the dist folder
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "dist", "index.html"));
+  });
+
+  const PORT = process.env.PORT || 4000;
 
   httpServer.listen(PORT, () =>
     console.log(`Server is now running on http://localhost:${PORT}`)
