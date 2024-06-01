@@ -1,5 +1,7 @@
 const { GraphQLError } = require("graphql");
 const jwt = require("jsonwebtoken");
+const { PubSub } = require("graphql-subscriptions");
+const pubsub = new PubSub();
 
 const Book = require("./models/book.js");
 const Author = require("./models/author.js");
@@ -114,7 +116,11 @@ const resolvers = {
         );
       }
 
-      return book.populate("author");
+      const newBook = book.populate("author");
+
+      pubsub.publish("BOOK_ADDED", { bookAdded: newBook });
+
+      return newBook;
     },
     editAuthor: async (root, args, { currentUser }) => {
       if (!currentUser) {
@@ -142,6 +148,11 @@ const resolvers = {
       const author = await Author.findOne({ name: root.name });
       const books = await Book.find({ author: author.id });
       return books.length;
+    },
+  },
+  Subscription: {
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterator("BOOK_ADDED"),
     },
   },
 };
